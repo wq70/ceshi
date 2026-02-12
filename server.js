@@ -149,11 +149,51 @@ wss.on('connection', (ws) => {
                                     fromNickname: data.fromNickname,
                                     fromAvatar: data.fromAvatar,
                                     message: data.message,
-                                    timestamp: data.timestamp
+                                    timestamp: data.timestamp,
+                                    isAiCharacter: data.isAiCharacter || false
                                 });
                             }
                         }
                     });
+                    break;
+                }
+
+                case 'ai_character_join': {
+                    // 通知群成员有AI角色加入
+                    const joinMembers = data.members || [];
+                    joinMembers.forEach(memberId => {
+                        if (memberId !== currentUserId) {
+                            const memberUser = onlineUsers.get(memberId);
+                            if (memberUser) {
+                                sendToClient(memberUser.ws, {
+                                    type: 'ai_character_join',
+                                    groupId: data.groupId,
+                                    character: data.character
+                                });
+                            }
+                        }
+                    });
+                    console.log(`[AI角色] ${data.character.originalName} 加入群聊 ${data.groupId}`);
+                    break;
+                }
+
+                case 'ai_character_leave': {
+                    // 通知群成员AI角色离开
+                    const leaveMembers = data.members || [];
+                    leaveMembers.forEach(memberId => {
+                        if (memberId !== currentUserId) {
+                            const memberUser = onlineUsers.get(memberId);
+                            if (memberUser) {
+                                sendToClient(memberUser.ws, {
+                                    type: 'ai_character_leave',
+                                    groupId: data.groupId,
+                                    characterId: data.characterId,
+                                    characterName: data.characterName
+                                });
+                            }
+                        }
+                    });
+                    console.log(`[AI角色] ${data.characterName} 离开群聊 ${data.groupId}`);
                     break;
                 }
 
